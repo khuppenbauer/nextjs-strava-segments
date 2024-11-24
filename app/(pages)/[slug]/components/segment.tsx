@@ -33,12 +33,8 @@ export default function SegmentComponent({ data, title, config }: SegmentProps) 
         </h1>
       </section>
       <div className="grid auto-rows-min gap-4 md:grid-cols-2">
-        <div className="aspect-video rounded-xl">
-          <Chart data={data} selectedRows={selectedRowIds} config={config} />
-        </div>
-        <div className="aspect-video rounded-xl">
-          <Map data={data} selectedRows={selectedRowIds} />
-        </div>
+        <Chart data={data} selectedRows={selectedRowIds} config={config} />
+        <Map data={data} selectedRows={selectedRowIds} />
       </div>
       <div className="min-h-[100vh] flex-1 rounded-xl md:min-h-min">
         <DataTable data={data} defaultSelectedRows={defaultRowSelection} onRowToggle={handleRowToggle} />
