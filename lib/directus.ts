@@ -1,20 +1,14 @@
-import { createDirectus, rest, staticToken } from "@directus/sdk";
-import getConfig from 'next/config';
+import { createDirectus, staticToken } from "@directus/sdk";
 
-export interface ItemsQuery {
-  limit?: number;
-  fields?: Array<string>;
-  filter?: Record<string, {
-    _eq: string | number;
-  }>;
+const token = process.env.NEXT_PUBLIC_DIRECTUS_TOKEN;
+const url = process.env.NEXT_PUBLIC_DIRECTUS_URL;
+
+if (!token) {
+  throw new Error("NEXT_PUBLIC_DIRECTUS_TOKEN is not defined.");
 }
 
-const {
-  publicRuntimeConfig: { url, token },
-} = getConfig();
+if (!url) {
+  throw new Error("NEXT_PUBLIC_DIRECTUS_URL is not defined.");
+}
 
-export const directus = createDirectus(
-  String(url),
-).with(staticToken(token)
-).with(rest()
-);
+export const directus = createDirectus(String(url)).with(staticToken(token));
