@@ -23,6 +23,7 @@ interface ChartProps {
 type GroupProps = Record<string, string>;
 
 const groupLabels: GroupProps = {
+  hour_complete: "Stunden (gesamt)",
   hour: "Stunden",
   day: "Tage",
   month: "Monate",
@@ -107,6 +108,7 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
     let active = true;
 
     const group: GroupProps = {
+      hour_complete: `["hour(${date_field})"]`,
       hour: `["year(${date_field})", "month(${date_field})", "day(${date_field})", "hour(${date_field})"]`,
       day: `["year(${date_field})", "month(${date_field})", "day(${date_field})"]`,
       month: `["year(${date_field})", "month(${date_field})"]`,
@@ -193,16 +195,22 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
           </Select>
         </div>
         <div className="flex">
-          {group_precision.map((key) => (
+          {group_precision.map((key) => {
+            const visible = key == "hour_complete" ? "max-sm:hidden" : "";
+            if (!groupLabels[key]) {
+              return null;
+            }
+            return (
               <button
                 key={key}
                 data-active={activeChart === key}
-                className={cn("relative flex-1 px-3 py-4", activeChart === key && "bg-muted/50")}
+                className={cn(`relative flex-1 px-3 py-4 ${visible}`, activeChart === key && "bg-muted/50")}
                 onClick={() => setActiveChart(key)}
               >
                 <span>{groupLabels[key]}</span>
               </button>
-            ))}
+            )
+          })}
         </div>
       </CardHeader>
       
