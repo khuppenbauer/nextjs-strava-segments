@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns"
+import { Calendar as CalendarIcon } from "lucide-react"
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -28,7 +29,11 @@ const groupLabels: GroupProps = {
   day: "Tage",
   month: "Monate",
   year: "Jahre",
+  week: "Wochen",
+  weekday: "Wochentage",
 };
+
+const dayLabels: string[] = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 
 const processConfig = (data: SegmentItem[], selectedRows: string[]): ChartConfig => {
   const chartConfig: SegmentEffortData = {};
@@ -113,6 +118,8 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
       day: `["year(${date_field})", "month(${date_field})", "day(${date_field})"]`,
       month: `["year(${date_field})", "month(${date_field})"]`,
       year: `["year(${date_field})"]`,
+      week: `["year(${date_field})", "week(${date_field})"]`,
+      weekday: `["day"]`,
     };
 
     const loadData = async () => {
@@ -177,53 +184,66 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
 
   return (
     <Card>
-      <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-        <div className="flex flex-1">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("w-[160px] mt-4 mx-4 text-left", !currentDate && "text-muted-foreground")}>
-                <CalendarIcon />
-                {currentDate ? format(currentDate, "dd.MM.yyyy") : format(new Date(), "dd.MM.yyyy")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <Calendar mode="single" selected={currentDate} onSelect={setCurrentDate} initialFocus />
-            </PopoverContent>
-          </Popover>
-          <Select value={chartStyle} onValueChange={setChartStyle}>
-            <SelectTrigger className="w-[120px] sm:ml-auto m-4">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="line">Line</SelectItem>
-              <SelectItem value="bar">Bar</SelectItem>
-              <SelectItem value="stacked">Bar stacked</SelectItem>
-            </SelectContent>
-          </Select>
+      <CardHeader className="flex items-stretch space-y-0 border-b p-0 flex-row">
+        <div className="flex-auto flex flex-col border-t even:border-l sm:border-l sm:border-t-0">
+          <span className="text-xs text-center py-2 pt-4">
+            Zeitraum
+          </span>
+          <span className="py-2 px-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className={cn("", !currentDate && "text-muted-foreground")}>
+                  <CalendarIcon />
+                  {currentDate ? format(currentDate, "dd.MM.yyyy") : format(new Date(), "dd.MM.yyyy")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <Calendar mode="single" selected={currentDate} onSelect={setCurrentDate} initialFocus />
+              </PopoverContent>
+            </Popover>
+          </span>
         </div>
-        <div className="flex">
-          {group_precision.map((key) => {
-            const visible = key == "hour_complete" ? "max-sm:hidden" : "";
-            if (!groupLabels[key]) {
-              return null;
-            }
-            return (
-              <button
-                key={key}
-                data-active={activeChart === key}
-                className={cn(`relative flex-1 px-3 py-4 ${visible}`, activeChart === key && "bg-muted/50")}
-                onClick={() => setActiveChart(key)}
-              >
-                <span>{groupLabels[key]}</span>
-              </button>
-            )
-          })}
+        <div className="flex-auto flex flex-col border-t even:border-l sm:border-l sm:border-t-0">
+          <span className="text-xs text-center py-2 pt-4">
+            Darstellung
+          </span>
+          <span className="py-2 px-4">
+            <Select value={chartStyle} onValueChange={setChartStyle}>
+              <SelectTrigger className="">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="line">Line</SelectItem>
+                <SelectItem value="monotone">Line Smooth</SelectItem>
+                <SelectItem value="step">Line Step</SelectItem>
+                <SelectItem value="bar">Bar</SelectItem>
+                <SelectItem value="stacked">Bar stacked</SelectItem>
+              </SelectContent>
+            </Select>
+          </span>
+        </div>
+        <div className="flex-auto flex flex-col border-t even:border-l sm:border-l sm:border-t-0">
+          <span className="text-xs text-center py-2 pt-4">
+            Gruppierung
+          </span>
+          <span className="py-2 px-4">
+            <Select value={activeChart} onValueChange={setActiveChart}>
+              <SelectTrigger className="">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <>
+                  {group_precision.map((key) => <SelectItem key={key} value={key}>{groupLabels[key]}</SelectItem>)}
+                </>
+              </SelectContent>
+            </Select>
+          </span>
         </div>
       </CardHeader>
       
       <CardContent className="px-2 sm:p-6">
-        {chartStyle === "line" ? (
-          <LineChartComponent data={result} chartConfig={chartConfig} segments={segments} />
+        {["line", "monotone", "step"].includes(chartStyle) ? (
+          <LineChartComponent data={result} chartConfig={chartConfig} segments={segments} type={chartStyle} />
         ) : (
           <BarChartComponent data={result} chartConfig={chartConfig} segments={segments} style={chartStyle} />
         )}

@@ -54,6 +54,8 @@ export interface SegmentEffort {
     date_created_month?: string;
     date_created_day?: string;
     date_created_hour?: string;
+    date_created_week?: string;
+    day?: number;
   };
   sum: {
     effort_count_interval: string;
