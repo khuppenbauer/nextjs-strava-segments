@@ -139,18 +139,25 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
         const efforts = segmentData[`query_${segment_id}`] || null;
         efforts.forEach((effort) => {
           const { 
-            group: { date_created_year, date_created_month, date_created_day, date_created_hour }, 
+            group: { date_created_year, date_created_month, date_created_day, date_created_hour, date_created_week, day }, 
             sum: { effort_count_interval } 
           } = effort;
-          let date = `${date_created_year}`;
+
+          let date = date_created_year;
           if (date_created_month) {
-            date = `${date_created_month}`;
+            date = date_created_month;
           }
           if (date_created_day) {
-            date = `${date_created_day}`;
+            date = date_created_day;
           }
           if (date_created_hour) {
             date = `${date_created_hour}:00`;
+          }
+          if (date_created_week) {
+            date = date_created_week;
+          }
+          if (typeof day === 'number') {
+            date = dayLabels[day];
           }
           let entry = chartData.find(item => item.date === date);
           if (!entry) {

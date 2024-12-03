@@ -79,6 +79,7 @@ export interface ChartConfig {
   segments: string[];
   data?: ChartArray;
   style?: string;
+  type?: string;
 };
 
 export type ChartArray = ChartPoint[];

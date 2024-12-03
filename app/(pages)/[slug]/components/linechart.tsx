@@ -5,7 +5,8 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { ChartConfig } from "@/types/fields";
 
-export default function LineChartComponent({ data, chartConfig, segments }: ChartConfig) {
+export default function LineChartComponent({ data, chartConfig, segments, type }: ChartConfig) {
+  const lineType: any = type || "linear";
   return (
     <ChartContainer
       config={chartConfig}
@@ -29,7 +30,7 @@ export default function LineChartComponent({ data, chartConfig, segments }: Char
           <Line
             key={key}
             dataKey={key}
-            type="monotone"
+            type={lineType}
             stroke={chartConfig[key].color}
             strokeWidth={2}
             dot={false}
