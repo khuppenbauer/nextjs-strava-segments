@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns"
+import { format, subWeeks, subMonths, startOfToday, startOfMonth, startOfYear } from "date-fns"
+import { DateRange } from "react-day-picker"
 import { Calendar as CalendarIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ interface ChartProps {
 
 type GroupProps = Record<string, string>;
 
+type DateRangeProps = Record<string, string>;
+
 const groupLabels: GroupProps = {
   hour_complete: "Stunden (gesamt)",
   hour: "Stunden",
@@ -34,6 +37,17 @@ const groupLabels: GroupProps = {
 };
 
 const dayLabels: string[] = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+
+const dateRangeLabels: DateRangeProps = {
+  today: "Heute",
+  "1w": "1 Woche",
+  "1m": "1 Monat",
+  "3m": "3 Monate",
+  mtd: "Dieser Monat",
+  ytd: "Dieses Jahr",
+};
+
+const dateRangeOptions: string[] = ["today", "1w", "1m", "3m", "mtd", "ytd"];
 
 const processConfig = (data: SegmentItem[], selectedRows: string[]): ChartConfig => {
   const chartConfig: SegmentEffortData = {};
@@ -60,30 +74,11 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const getDateRange = (activeChart: string, currentDate: Date) => {
-  const { year, month } = parseDate(currentDate);
-  let from: Date | null = null;
-  let to: Date | null = null;
-
-  switch (activeChart) {
-    case "hour":
-      from = currentDate;
-      to = new Date(currentDate.getTime() + 86400000);
-      break;
-    case "day":
-      from = new Date(year, month - 1, 1);
-      to = new Date(year, month, 1);
-      break;
-    case "month":
-      from = new Date(year, 0, 1);
-      to = new Date(year + 1, 0, 1);
-      break;
-  }
-
-  return from && to ? { from: formatDate(from), to: formatDate(to) } : null;
+const getDateRange = (date: DateRange) => {
+  return date.from && date.to ? { from: formatDate(date.from), to: formatDate(date.to) } : null;
 };
 
-const buildGraphQLQuery = (data: SegmentItem[], group: GroupProps, dateFilter: string, activeChart: string, date_field: string, group_aggregation: string, value_field: string) => {
+const buildGraphQLQuery = (data: SegmentItem[], group: GroupProps, dateFilter: string, activeChart: string, group_aggregation: string, value_field: string) => {
   return data.map(({ segment_id }) => `
     query_${segment_id}: strava_segments_efforts_aggregated(
       limit: -1,
@@ -103,12 +98,14 @@ const buildGraphQLQuery = (data: SegmentItem[], group: GroupProps, dateFilter: s
 
 export default function ChartComponent({ data, selectedRows, config }: ChartProps) {
   const { group_aggregation, group_precision, value_field, date_field, style } = config;
-  const [activeChart, setActiveChart] = React.useState(group_precision[0]);
-  const [currentDate, setCurrentDate] = React.useState<Date>();
+  const [activeChart, setActiveChart] = React.useState("day");
   const [chartStyle, setChartStyle] = React.useState(style);
   const { chartConfig, segments } = processConfig(data, selectedRows);
   const [result, setResult] = React.useState<ChartArray>();
-
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: new Date(),
+  })
   React.useEffect(() => {
     let active = true;
 
@@ -123,8 +120,10 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
     };
 
     const loadData = async () => {
-      const defaultDate = currentDate || new Date();
-      const dateRange = getDateRange(activeChart, defaultDate);
+      let dateRange;
+      if (date) {
+        dateRange = getDateRange(date);
+      }
 
       let dateFilter = ``;
       if (dateRange) {
@@ -134,7 +133,7 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
         `;
       }
 
-      const query = `query { ${buildGraphQLQuery(data, group, dateFilter, activeChart, date_field, group_aggregation, value_field)} }`;
+      const query = `query { ${buildGraphQLQuery(data, group, dateFilter, activeChart, group_aggregation, value_field)} }`;
       
       const segmentData: SegmentEffortResponse = await getSegmentEfforts(query);
 
@@ -155,9 +154,12 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
             date = date_created_month;
           }
           if (date_created_day) {
-            date = date_created_day;
+            date = `${date_created_day}.${date_created_month}`;
           }
-          if (date_created_hour) {
+          if (date_created_hour && activeChart == 'hour') {
+            date = `${date_created_day}.${date_created_month} ${date_created_hour}:00`;
+          }
+          if (date_created_hour && activeChart == 'hour_complete') {
             date = `${date_created_hour}:00`;
           }
           if (date_created_week) {
@@ -171,7 +173,7 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
             entry = { date };
             chartData.push(entry);
           }
-          entry[segment_id] = effort_count_interval;
+          entry[segment_id] = parseInt(effort_count_interval) > 0 ? effort_count_interval : 0;
         });
       });
 
@@ -180,11 +182,11 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
 
     loadData();
     return () => { active = false };
-  }, [activeChart, currentDate, data, date_field, group_aggregation, value_field]);
+  }, [activeChart, date, data, date_field, group_aggregation, value_field]);
 
   return (
     <Card>
-      <CardHeader className="flex items-stretch space-y-0 border-b p-0 flex-row">
+      <CardHeader className="flex flex-wrap items-stretch space-y-0 border-b p-0 flex-row">
         <div className="flex-auto flex flex-col border-t even:border-l sm:border-l sm:border-t-0">
           <span className="text-xs text-center py-2 pt-4">
             Zeitraum
@@ -192,34 +194,68 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
           <span className="py-2 px-4">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("", !currentDate && "text-muted-foreground")}>
+                <Button id="date" variant={"outline"} className={cn("w-[300px] justify-start text-left font-normal", !date && "text-muted-foreground")}>
                   <CalendarIcon />
-                  {currentDate ? format(currentDate, "dd.MM.yyyy") : format(new Date(), "dd.MM.yyyy")}
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, "LLL dd, y")} -{" "}
+                        {format(date.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(date.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent>
-                <Calendar mode="single" selected={currentDate} onSelect={setCurrentDate} initialFocus />
+              <PopoverContent className="w-auto p-0" align="start">
+                <Select
+                  onValueChange={(value) => {
+                    let dateRange;
+                    switch (value) {
+                      case 'today':
+                        dateRange = { from: startOfToday(), to: new Date()}
+                        break;
+                      case '1w':
+                        dateRange = { from: subWeeks(startOfToday(), 1), to: new Date()}
+                        break;
+                      case '1m':
+                        dateRange = { from: subMonths(startOfToday(), 1), to: new Date()}
+                        break;
+                      case '3m':
+                        dateRange = { from: subMonths(startOfToday(), 3), to: new Date()}
+                        break;
+                      case 'mtd':
+                        dateRange = { from: startOfMonth(startOfToday()), to: new Date()}
+                        break;
+                      case 'ytd':
+                        dateRange = { from: startOfYear(startOfToday()), to: new Date()}
+                        break;          
+                    }
+                    setDate(dateRange)
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Zeitraum" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    <>
+                      {dateRangeOptions.map((key) => <SelectItem key={key} value={key}>{dateRangeLabels[key]}</SelectItem>)}
+                    </>
+                  </SelectContent>
+                </Select>
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={1}
+                />
               </PopoverContent>
             </Popover>
-          </span>
-        </div>
-        <div className="flex-auto flex flex-col border-t even:border-l sm:border-l sm:border-t-0">
-          <span className="text-xs text-center py-2 pt-4">
-            Darstellung
-          </span>
-          <span className="py-2 px-4">
-            <Select value={chartStyle} onValueChange={setChartStyle}>
-              <SelectTrigger className="">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="line">Line</SelectItem>
-                <SelectItem value="monotone">Line Smooth</SelectItem>
-                <SelectItem value="step">Line Step</SelectItem>
-                <SelectItem value="bar">Bar</SelectItem>
-                <SelectItem value="stacked">Bar stacked</SelectItem>
-              </SelectContent>
-            </Select>
           </span>
         </div>
         <div className="flex-auto flex flex-col border-t even:border-l sm:border-l sm:border-t-0">
@@ -235,6 +271,25 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
                 <>
                   {group_precision.map((key) => <SelectItem key={key} value={key}>{groupLabels[key]}</SelectItem>)}
                 </>
+              </SelectContent>
+            </Select>
+          </span>
+        </div>
+        <div className="flex-auto flex flex-col border-t even:border-l sm:border-l-0 sm:border-t-0">
+          <span className="text-xs text-center py-2 pt-4">
+            Darstellung
+          </span>
+          <span className="py-2 px-4">
+            <Select value={chartStyle} onValueChange={setChartStyle}>
+              <SelectTrigger className="">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="line">Line</SelectItem>
+                <SelectItem value="monotone">Line Smooth</SelectItem>
+                <SelectItem value="step">Line Step</SelectItem>
+                <SelectItem value="bar">Bar</SelectItem>
+                <SelectItem value="stacked">Bar stacked</SelectItem>
               </SelectContent>
             </Select>
           </span>

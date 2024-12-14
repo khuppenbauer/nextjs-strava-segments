@@ -6,6 +6,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { ChartConfig } from "@/types/fields";
 
 export default function LineChartComponent({ data, chartConfig, segments, type }: ChartConfig) {
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
   const lineType: any = type || "linear";
   return (
     <ChartContainer
