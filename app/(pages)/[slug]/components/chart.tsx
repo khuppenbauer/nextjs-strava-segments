@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, subWeeks, subMonths, startOfToday, startOfMonth, startOfYear } from "date-fns"
+import { format, subWeeks, subMonths, startOfToday, startOfMonth, startOfYear, endOfToday, addDays } from "date-fns"
 import { DateRange } from "react-day-picker"
 import { Calendar as CalendarIcon } from "lucide-react"
 
@@ -75,7 +75,7 @@ const formatDate = (date: Date) => {
 };
 
 const getDateRange = (date: DateRange) => {
-  return date.from && date.to ? { from: formatDate(date.from), to: formatDate(date.to) } : null;
+  return date.from && date.to ? { from: formatDate(date.from), to: formatDate(addDays(date.to, 1)) } : null;
 };
 
 const buildGraphQLQuery = (data: SegmentItem[], group: GroupProps, dateFilter: string, activeChart: string, group_aggregation: string, value_field: string) => {
@@ -104,7 +104,7 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
   const [result, setResult] = React.useState<ChartArray>();
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
-    to: new Date(),
+    to: endOfToday(),
   })
   React.useEffect(() => {
     let active = true;
@@ -216,22 +216,22 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
                     let dateRange;
                     switch (value) {
                       case 'today':
-                        dateRange = { from: startOfToday(), to: new Date()}
+                        dateRange = { from: startOfToday(), to: endOfToday()}
                         break;
                       case '1w':
-                        dateRange = { from: subWeeks(startOfToday(), 1), to: new Date()}
+                        dateRange = { from: subWeeks(startOfToday(), 1), to: endOfToday()}
                         break;
                       case '1m':
-                        dateRange = { from: subMonths(startOfToday(), 1), to: new Date()}
+                        dateRange = { from: subMonths(startOfToday(), 1), to: endOfToday()}
                         break;
                       case '3m':
-                        dateRange = { from: subMonths(startOfToday(), 3), to: new Date()}
+                        dateRange = { from: subMonths(startOfToday(), 3), to: endOfToday()}
                         break;
                       case 'mtd':
-                        dateRange = { from: startOfMonth(startOfToday()), to: new Date()}
+                        dateRange = { from: startOfMonth(startOfToday()), to: endOfToday()}
                         break;
                       case 'ytd':
-                        dateRange = { from: startOfYear(startOfToday()), to: new Date()}
+                        dateRange = { from: startOfYear(startOfToday()), to: endOfToday()}
                         break;          
                     }
                     setDate(dateRange)
