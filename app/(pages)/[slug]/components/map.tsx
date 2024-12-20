@@ -7,8 +7,10 @@ import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import GeoJSON from 'ol/format/GeoJSON';
 import OSM from 'ol/source/OSM';
+import GeoJSON from 'ol/format/GeoJSON';
+import { buffer } from 'ol/extent';
+import { ZoomToExtent, defaults as defaultControls } from 'ol/control.js';
 import { Style, Stroke } from 'ol/style';
 import { Card, CardContent } from "@/components/ui/card";
 import { featureCollection } from "@/lib/featureCollection";
@@ -36,6 +38,8 @@ const borderStyle = new Style({
     width: 4,
   })
 });
+
+const extendPadding = 500;
 
 export default function MapComponent({ data, selectedRows }: MapProps) {
   const [ popupContent, setPopupContent ] = React.useState<PopupContent>({});
@@ -67,6 +71,10 @@ export default function MapComponent({ data, selectedRows }: MapProps) {
       },
     });
 
+    const control = new ZoomToExtent({
+      extent: buffer(vectorSource.getExtent(), extendPadding),
+    });
+
     const map = new Map({
       target: 'map',
       layers: [
@@ -74,6 +82,7 @@ export default function MapComponent({ data, selectedRows }: MapProps) {
         vectorLayer,
       ],
       view: new View(),
+      controls: defaultControls().extend([control]),
     });
 
     /* eslint-disable  @typescript-eslint/no-explicit-any */
@@ -93,7 +102,7 @@ export default function MapComponent({ data, selectedRows }: MapProps) {
       }
     });
 
-    map.getView().fit(vectorSource.getExtent(), { padding: [100, 100, 100, 100] });
+    map.getView().fit(buffer(vectorSource.getExtent(), extendPadding));
 
     return () => {
       map.setTarget('');
