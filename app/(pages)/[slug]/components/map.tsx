@@ -47,8 +47,8 @@ export default function MapComponent({ data, selectedRows }: MapProps) {
   React.useEffect(() => {
     const selectedFeatures: GeoJsonFeature[] = data
       .filter(segment => selectedRows.includes(segment.id))
-      .map(({ id, name, geojson, color }) => {
-        geojson.properties = { id, name, color };
+      .map(({ id, name, activity_type, geojson, color }) => {
+        geojson.properties = { id, name: `${name} (${activity_type})`, color };
         return geojson;
       });
 
@@ -116,7 +116,7 @@ export default function MapComponent({ data, selectedRows }: MapProps) {
         {popupContent.name && (
           <div
             id="popup"
-            className="bg-white border rounded-lg shadow-lg p-3 z-50 text-sm"
+            className="border rounded-lg shadow-lg p-3 z-50 text-sm"
           >
             {popupContent.name}
           </div>

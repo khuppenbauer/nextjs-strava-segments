@@ -33,13 +33,14 @@ export interface PageChartConfig {
 }
 
 export interface Segment {
-  item: SegmentItem;
+  strava_segments_id: SegmentItem;
 }
 
 export interface SegmentItem {
   id: string;
   segment_id: string;
   name: string;
+  activity_type: string;
   city: string;
   state: string;
   country: string;

@@ -53,9 +53,9 @@ const processConfig = (data: SegmentItem[], selectedRows: string[]): ChartConfig
   const chartConfig: SegmentEffortData = {};
   const segments: string[] = [];
 
-  data.forEach(({ id, name, segment_id, color }) => {
+  data.forEach(({ id, name, segment_id, color, activity_type }) => {
     if (selectedRows.includes(id)) {
-      chartConfig[segment_id] = { label: name, color };
+      chartConfig[segment_id] = { label: `${name} (${activity_type})`, color };
       if (!segments.includes(segment_id)) segments.push(segment_id);
     }
   });

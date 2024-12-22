@@ -4,7 +4,7 @@ import * as React from "react";
 import { ColumnDef, SortingState, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SegmentItem, RowSelection } from "@/types/fields";
@@ -52,6 +52,17 @@ export const columns: ColumnDef<SegmentItem>[] = [
           {row.getValue("name")}
         </p>
       </div>
+    ),
+  },
+  {
+    accessorKey: "activity_type",
+    header: ({ column }) => (
+      <SortableHeader column={column} label="Typ" />
+    ),
+    cell: ({ row }) => (
+      <p className="text-sm font-medium leading-none">
+        {row.getValue("activity_type")}
+      </p>
     ),
   },
   {

@@ -10,7 +10,7 @@ export default async function PageApp({ params }: PageProps) {
   const { slug } = params;
 
   const data: Page[] = await getPages({
-    fields: ["*", "segments.item.*"],
+    fields: ["*", "segments.*.*"],
     filter: { slug: { _eq: slug } },
     limit: 1,
   });
@@ -35,13 +35,13 @@ export default async function PageApp({ params }: PageProps) {
   };
 
   const items: SegmentItem[] = segments.map((segment, index) => {
-    const { item } = segment;
+    const { strava_segments_id } = segment;
 
     const hue = index * colorFactor;
     const saturation = 80 - (index * 30 / segmentCount);
     const lightness = 40 + (index * 30 / segmentCount);
     return {
-      ...item,
+      ...strava_segments_id,
       color: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
     };
   });
