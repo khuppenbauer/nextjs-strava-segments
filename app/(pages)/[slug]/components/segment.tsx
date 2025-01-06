@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { SegmentItem, RowSelection, PageChartConfig } from "@/types/fields";
 import DataTable from "./table";
 import Chart from "./chart";
@@ -21,9 +21,11 @@ export default function SegmentComponent({ data, title, config }: SegmentProps) 
   }, [data]);
 
   const [selectedRows, setSelectedRows] = useState<RowSelection>(defaultRowSelection);
-  const selectedRowIds = Object.keys(selectedRows);
+  const selectedRowIds = useMemo(() => Object.keys(selectedRows), [selectedRows]);
 
-  const handleRowToggle = (items: RowSelection) => setSelectedRows(items);
+  const handleRowToggle = useCallback((items: RowSelection) => {
+    setSelectedRows({ ...items });
+  }, []);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
