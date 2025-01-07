@@ -167,7 +167,7 @@ const SortableHeader = ({ column, label }: { column: any; label: string }) => (
   </Button>
 )
 
-function Filter({ column }: { column: Column<any, unknown> }) {
+function Filter({ column, onFilterReset }: { column: Column<any, unknown>; onFilterReset: () => void }) {
   const { filterVariant } = column.columnDef.meta ?? {}
   const columnFilterValue = column.getFilterValue()
 
@@ -175,7 +175,6 @@ function Filter({ column }: { column: Column<any, unknown> }) {
     if (filterVariant === "range") {
       return [];
     }
-  
     const uniqueValues = Array.from(column.getFacetedUniqueValues().keys());
     return uniqueValues.sort().slice(0, 5000);
   }, [column, filterVariant]);
@@ -190,7 +189,12 @@ function Filter({ column }: { column: Column<any, unknown> }) {
       <Input
         type="text"
         value={(columnFilterValue ?? '') as string}
-        onChange={e => column.setFilterValue(e.target.value)}
+        onChange={e => {
+          column.setFilterValue(e.target.value)
+          if (e.target.value === "") {
+            onFilterReset()
+          }
+        }}
         placeholder={`Search... (${column.getFacetedUniqueValues().size})`}
         list={column.id + 'list'}
       />
@@ -199,10 +203,11 @@ function Filter({ column }: { column: Column<any, unknown> }) {
   ) : filterVariant === 'select' ? (
     <>
       <Select 
-        value={columnFilterValue?.toString()}
+        value={columnFilterValue?.toString() || "all"}
         onValueChange={(value) => {
           if (value === "all") {
             column.setFilterValue("")
+            onFilterReset()
           } else {
             column.setFilterValue(value)
           }
@@ -246,31 +251,31 @@ export default function TableComponent({ data, defaultSelectedRows, onRowToggle 
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  React.useEffect(() => {
-    onRowToggle(rowSelection)
-  }, [rowSelection, onRowToggle]);
+  const handleResetFilter = React.useCallback(() => {
+    const rows = table.getCoreRowModel().rows;
+    rows.forEach((row) => {
+      rowSelection[row.id] = true;
+    });
+    setRowSelection(rowSelection);
+  }, [table, rowSelection]);
 
   React.useEffect(() => {
-    const updatedRowSelection = { ...rowSelection };
-  
     const selectedRowIds = Object.keys(rowSelection);
     const filteredRows = table.getFilteredRowModel().rows;
     const filteredRowIds = filteredRows.map((row) => row.id);
   
-    if (columnFilters.length === 0) {
+    if (columnFilters.length > 0) {
       filteredRowIds.forEach((id) => {
-        updatedRowSelection[id] = true;
+        rowSelection[id] = true;
       });
-    } else {
       selectedRowIds.forEach((id) => {
         if (!filteredRowIds.includes(id)) {
-          delete updatedRowSelection[id];
+          delete rowSelection[id];
         }
       });
     }
-  
-    onRowToggle(updatedRowSelection);
-  }, [rowSelection, table, columnFilters, onRowToggle]);
+    onRowToggle(rowSelection);
+  }, [table, rowSelection, columnFilters, onRowToggle]);
   
 
   return (
@@ -288,7 +293,7 @@ export default function TableComponent({ data, defaultSelectedRows, onRowToggle 
                         <>
                           {header.column.getCanFilter() ? (
                             <div className="py-2">
-                              <Filter column={header.column} />
+                              <Filter column={header.column} onFilterReset={handleResetFilter} />
                             </div>
                           ) : null}
                           <div>
