@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, subWeeks, subMonths, startOfToday, startOfMonth, startOfYear, endOfToday, addDays } from "date-fns"
+import { format, subWeeks, subMonths, subYears, startOfToday, startOfMonth, startOfYear, endOfToday, addDays } from "date-fns"
 import { DateRange } from "react-day-picker"
 import { Calendar as CalendarIcon } from "lucide-react"
 
@@ -43,11 +43,12 @@ const dateRangeLabels: DateRangeProps = {
   "1w": "1 Woche",
   "1m": "1 Monat",
   "3m": "3 Monate",
+  "1y": "1 Jahr",
   mtd: "Dieser Monat",
   ytd: "Dieses Jahr",
 };
 
-const dateRangeOptions: string[] = ["today", "1w", "1m", "3m", "mtd", "ytd"];
+const dateRangeOptions: string[] = ["today", "1w", "1m", "3m", "1y", "mtd", "ytd"];
 
 const processConfig = (data: SegmentItem[], selectedRows: string[]): ChartConfig => {
   const chartConfig: SegmentEffortData = {};
@@ -226,6 +227,9 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
                         break;
                       case '3m':
                         dateRange = { from: subMonths(startOfToday(), 3), to: endOfToday()}
+                        break;
+                      case '1y':
+                        dateRange = { from: subYears(startOfToday(), 1), to: endOfToday()}
                         break;
                       case 'mtd':
                         dateRange = { from: startOfMonth(startOfToday()), to: endOfToday()}
