@@ -6,6 +6,7 @@ import { Page } from "@/types/fields";
 export default async function Home() {
   const data: Page[] = await getPages({
     fields: ["*", "segments.item.*"],
+    filter: { status: { _eq: "published" } },
     sort: ["title"],
   });
 
