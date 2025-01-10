@@ -15,7 +15,7 @@ import {
   getFacetedUniqueValues,
   getFilteredRowModel
 } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,6 +59,13 @@ export const columns: ColumnDef<SegmentItem>[] = [
       />
     ),
     enableSorting: false,
+  },
+  {
+    accessorKey: "segment_id",
+    header: "",
+    cell: ({ row }) => (
+      <a href={`https://www.strava.com/segments/${row.getValue('segment_id')}`} target="_blank"><ArrowUpRight /></a>
+    ),
   },
   {
     accessorKey: "name",
