@@ -69,6 +69,7 @@ export interface SegmentEffortResponse {
 
 export interface ChartPoint {
   date: string;
+  time: number;
   [key: string]: number | string;
 };
 

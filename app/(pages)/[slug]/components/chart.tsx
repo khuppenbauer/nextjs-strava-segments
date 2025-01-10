@@ -171,13 +171,18 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
           }
           let entry = chartData.find(item => item.date === date);
           if (!entry) {
-            entry = { date };
+            let time = `${date_created_year}-${date_created_month}-${date_created_day}`;
+            if (date_created_hour) {
+              time = `${time}T${date_created_hour}`;
+            }
+            entry = { date, time: new Date(time).getTime() };
             chartData.push(entry);
           }
           entry[segment_id] = parseInt(effort_count_interval) > 0 ? effort_count_interval : 0;
         });
       });
 
+      chartData.sort((a, b) => a.time - b.time);
       setResult(chartData);
     };
 
