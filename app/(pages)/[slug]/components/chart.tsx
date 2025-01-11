@@ -104,7 +104,7 @@ export default function ChartComponent({ data, selectedRows, config }: ChartProp
   const { chartConfig, segments } = processConfig(data, selectedRows);
   const [result, setResult] = React.useState<ChartArray>();
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
+    from: subWeeks(startOfToday(), 1),
     to: endOfToday(),
   })
   React.useEffect(() => {
